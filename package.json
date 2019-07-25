@@ -1,0 +1,52 @@
+{
+  "name": "nkn-multiclient",
+  "version": "0.0.1",
+  "description": "NKN Client",
+  "main": "lib/index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\""
+  },
+  "browserify": {
+    "transform": [
+      [
+        "browserify-replace",
+        {
+          "replace": [
+            {
+              "from": "var global = Function\\('return this'\\)\\(\\);",
+              "to": "var global = (function(){ return this }).call(null);"
+            }
+          ]
+        }
+      ]
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nknorg/nkn-multiclient-js.git"
+  },
+  "keywords": [
+    "NKN",
+    "blockchain",
+    "distributed system"
+  ],
+  "author": "NKN",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/nknorg/nkn-multiclient-js/issues"
+  },
+  "homepage": "https://nkn.org",
+  "dependencies": {
+    "memory-cache": "^0.2.0",
+    "nkn-client": "^0.6.2"
+  },
+  "devDependencies": {
+    "browserify-replace": "^1.0.0",
+    "grunt": "^1.0.2",
+    "grunt-browserify": "^5.3.0",
+    "grunt-contrib-uglify-es": "^3.3.0"
+  }
+}
