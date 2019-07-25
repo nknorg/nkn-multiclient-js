@@ -83,9 +83,18 @@ function MultiClient(options = {}) {
     }
   }
 
-  this.clients = clients;
-  this.defaultClient = options.originalIdentifier ? clients[null] : clients[0];
   this.eventListeners = {};
+  this.options = options;
+  this.clients = clients;
+
+  if (Object.keys(clients).length === 0) {
+    return
+  }
+
+  this.defaultClient = options.originalIdentifier ? clients[null] : clients[0];
+  this.key = this.defaultClient.key;
+  this.identifier = options.identifier || '';
+  this.addr = (this.identifier ? this.identifier + '.' : '') + this.key.publicKey;
 
   Object.values(clients).forEach((client) => {
     client.on('message', async (src, payload, payloadType, encrypt, pid) => {
@@ -109,7 +118,9 @@ function MultiClient(options = {}) {
       }
       let responded = false;
       for (let response of responses) {
-        if (response !== undefined && response !== null) {
+        if (response === false) {
+          return false;
+        } else if (response !== undefined && response !== null) {
           this.send(src, response, {
             encrypt: encrypt,
             msgHoldingSeconds: 0,
@@ -129,6 +140,7 @@ function MultiClient(options = {}) {
           }
         });
       }
+      return false;
     });
   });
 };
@@ -34279,18 +34291,18 @@ function messageFromPayload(payload, encrypt, dest) {
   }
 }
 
-function sendMsg(dest, data, encrypt, maxHoldingSeconds, replyToPid) {
+function sendMsg(dest, data, encrypt, maxHoldingSeconds, replyToPid, msgPid) {
   if (Array.isArray(dest)) {
     if (dest.length === 0) {
       return null;
     }
     if (dest.length === 1) {
-      return sendMsg.call(this, dest[0], data, encrypt, maxHoldingSeconds, replyToPid);
+      return sendMsg.call(this, dest[0], data, encrypt, maxHoldingSeconds, replyToPid, msgPid);
     }
     if (dest.length > 1 && encrypt) {
       console.warn("Encryption with multicast is not supported yet, fall back to unicast and will not return msg pid")
       for (var i = 0; i < dest.length; i++) {
-        sendMsg.call(this, dest[i], data, encrypt, maxHoldingSeconds, replyToPid);
+        sendMsg.call(this, dest[i], data, encrypt, maxHoldingSeconds, replyToPid, msgPid);
       }
       return null;
     }
@@ -34298,9 +34310,9 @@ function sendMsg(dest, data, encrypt, maxHoldingSeconds, replyToPid) {
 
   let payload;
   if (Is.string(data)) {
-    payload = protocol.newTextPayload(data, replyToPid);
+    payload = protocol.newTextPayload(data, replyToPid, msgPid);
   } else {
-    payload = protocol.newBinaryPayload(data, replyToPid);
+    payload = protocol.newBinaryPayload(data, replyToPid, msgPid);
   }
 
   let pldMsg = messageFromPayload.call(this, payload, encrypt, dest);
@@ -34311,13 +34323,6 @@ function sendMsg(dest, data, encrypt, maxHoldingSeconds, replyToPid) {
 
   return payload.getPid();
 }
-
-function sendACK(dest, pid, encrypt) {
-  let payload = protocol.newAckPayload(pid);
-  let pldMsg = messageFromPayload.call(this, payload, encrypt, dest);
-  let msg = protocol.newOutboundMessage.call(this, dest, pldMsg.serializeBinary(), 0);
-  this.ws.send(msg.serializeBinary());
-};
 
 async function handleInboundMsg(rawMsg) {
   let msg = protocol.messages.InboundMessage.deserializeBinary(rawMsg);
@@ -34365,7 +34370,7 @@ async function handleInboundMsg(rawMsg) {
       if (this.eventListeners.message) {
         responses = await Promise.all(this.eventListeners.message.map(f => {
           try {
-            return Promise.resolve(f(msg.getSrc(), data, payload.getType(), pldMsg.getEncrypted()));
+            return Promise.resolve(f(msg.getSrc(), data, payload.getType(), pldMsg.getEncrypted(), payload.getPid()));
           } catch (e) {
             console.error(e);
             return Promise.resolve(null);
@@ -34374,14 +34379,21 @@ async function handleInboundMsg(rawMsg) {
       }
       let responded = false;
       for (let response of responses) {
-        if (response !== undefined && response !== null) {
-          sendMsg.call(this, msg.getSrc(), response, pldMsg.getEncrypted(), 0, payload.getPid());
+        if (response === false) {
+          return true;
+        } else if (response !== undefined && response !== null) {
+          this.send(msg.getSrc(), response, {
+            encrypt: pldMsg.getEncrypted(),
+            msgHoldingSeconds: 0,
+            replyToPid: payload.getPid(),
+            noReply: true,
+          });
           responded = true;
           break;
         }
       }
       if (!responded) {
-        sendACK.call(this, msg.getSrc(), payload.getPid(), pldMsg.getEncrypted());
+        this.sendACK(msg.getSrc(), payload.getPid(), pldMsg.getEncrypted());
       }
       return true;
   }
@@ -34427,6 +34439,7 @@ function Client(key, identifier, options = {}) {
   this.responseManager = new ResponseManager();
   this.ws = null;
   this.node = null;
+  this.ready = false;
 
   this.connect();
 };
@@ -34495,6 +34508,7 @@ function newWsAddr(nodeInfo) {
     switch (msg.Action) {
       case 'setClient':
         this.sigChainBlockHash = msg.Result.sigChainBlockHash;
+        this.ready = true;
         if (this.eventListeners.connect) {
           this.eventListeners.connect.forEach(f => f());
         }
@@ -34568,8 +34582,8 @@ Client.prototype.send = function (dest, data, options = {}) {
   let msgHoldingSeconds = getOrDefault(options.msgHoldingSeconds, this.options.msgHoldingSeconds);
   let encrypt = getOrDefault(options.encrypt, this.options.encrypt);
 
-  let pid = sendMsg.call(this, dest, data, encrypt, msgHoldingSeconds);
-  if (pid === null) {
+  let pid = sendMsg.call(this, dest, data, encrypt, msgHoldingSeconds, options.replyToPid, options.pid);
+  if (pid === null || options.noReply) {
     return null;
   }
 
@@ -34582,17 +34596,25 @@ Client.prototype.send = function (dest, data, options = {}) {
   });
 };
 
-Client.prototype.publish = async function (topic, bucket, data, options = {}) {
-  let msgHoldingSeconds = getOrDefault(options.msgHoldingSeconds, this.options.msgHoldingSeconds);
-  let encrypt = getOrDefault(options.encrypt, this.options.encrypt);
+Client.prototype.sendACK = function (dest, pid, encrypt) {
+  let payload = protocol.newAckPayload(pid);
+  let pldMsg = messageFromPayload.call(this, payload, encrypt, dest);
+  let msg = protocol.newOutboundMessage.call(this, dest, pldMsg.serializeBinary(), 0);
+  this.ws.send(msg.serializeBinary());
+};
 
-  let res = await rpcCall(
-      this.options.seedRpcServerAddr,
-      'getsubscribers',
-      { topic: topic, bucket: bucket },
+Client.prototype.getSubscribers = function (topic, bucket) {
+  return rpcCall(
+    this.options.seedRpcServerAddr,
+    'getsubscribers',
+    { topic: topic, bucket: bucket },
   );
+}
 
-  return sendMsg.call(this, Object.keys(res), data, encrypt, msgHoldingSeconds);
+Client.prototype.publish = async function (topic, bucket, data, options = {}) {
+  let subscribers = await this.getSubscribers(topic, bucket);
+  options = Object.assign({}, options, { noReply: true });
+  return this.send(Object.keys(subscribers), data, options);
 }
 
 Client.prototype.close = function () {
@@ -34819,11 +34841,13 @@ const serialize = require('./serialize');
 
 const pidSize = 8; // in bytes
 
-function newPayload(type, replyToPid, data) {
+function newPayload(type, replyToPid, data, msgPid) {
   let payload = new payloads.Payload();
   payload.setType(type);
   if (replyToPid) {
     payload.setReplyToPid(replyToPid);
+  } else if (msgPid) {
+    payload.setPid(msgPid);
   } else {
     payload.setPid(tools.randomBytes(pidSize));
   }
@@ -34831,18 +34855,18 @@ function newPayload(type, replyToPid, data) {
   return payload;
 }
 
-module.exports.newBinaryPayload = function (data, replyToPid) {
-  return newPayload(payloads.PayloadType.BINARY, replyToPid, data);
+module.exports.newBinaryPayload = function (data, replyToPid, msgPid) {
+  return newPayload(payloads.PayloadType.BINARY, replyToPid, data, msgPid);
 }
 
-module.exports.newTextPayload = function (text, replyToPid) {
+module.exports.newTextPayload = function (text, replyToPid, msgPid) {
   let data = new payloads.TextData();
   data.setText(text);
-  return newPayload(payloads.PayloadType.TEXT, replyToPid, data.serializeBinary());
+  return newPayload(payloads.PayloadType.TEXT, replyToPid, data.serializeBinary(), msgPid);
 }
 
-module.exports.newAckPayload = function (replyToPid) {
-  return newPayload(payloads.PayloadType.ACK, replyToPid);
+module.exports.newAckPayload = function (replyToPid, msgPid) {
+  return newPayload(payloads.PayloadType.ACK, replyToPid, null, msgPid);
 }
 
 module.exports.newMessage = function (payload, encrypted, nonce) {
@@ -34951,6 +34975,7 @@ function addr2Pubkey(addr) {
 
 module.exports.messages = messages;
 module.exports.payloads = payloads;
+module.exports.pidSize = pidSize;
 
 }).call(this,require("buffer").Buffer)
 },{"../crypto/hash":155,"../crypto/tools":158,"./pb/messages_pb":161,"./pb/payloads_pb":162,"./pb/sigchain_pb":163,"./serialize":164,"buffer":50}],161:[function(require,module,exports){
