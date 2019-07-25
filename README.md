@@ -32,16 +32,19 @@ initial configurations:
 ```javascript
 const multiclient = nknMultiClient({
   numSubClients: 3,
-  originalIdentifier: false,
+  originalClient: false,
 });
 ```
 
-where `originalIdentifier` controls whether a client with original identifier
+where `originalClient` controls whether a client with original identifier
 (without adding any additional identifier prefix) will be created, and
 `numSubClients` controls how many sub-clients to create by adding prefix
-`__0__.`, `__1__.`, `__2__.`, etc. Using `originalIdentifier: true` and
-`numSubClients: 0` is equivalent to using a standard nkn-client-js without
-any modification to the identifier.
+`__0__.`, `__1__.`, `__2__.`, etc. Using `originalClient: true` and
+`numSubClients: 0` is equivalent to using a standard nkn-client-js without any
+modification to the identifier. Note that if you use `originalClient: true` and
+`numSubClients` is greater than 0, your identifier should not starts with
+`__X__` where `X` is any number, otherwise you may end up with identifier
+collision.
 
 Any additional options will be passed to nkn client.
 

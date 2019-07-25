@@ -4,7 +4,7 @@
 module.exports = {
   defaultOptions: {
     numSubClients: 3,
-    originalIdentifier: false,
+    originalClient: false,
     msgCacheExpiration: 300 * 1000,
   },
 };
@@ -69,7 +69,7 @@ function MultiClient(options = {}) {
 
   let clients = {};
 
-  if (options.originalIdentifier) {
+  if (options.originalClient) {
     clients[null] = nkn(options);
     if (!options.seed) {
       options = Object.assign({}, options, { seed: clients[null].key.seed });
@@ -91,7 +91,7 @@ function MultiClient(options = {}) {
     return
   }
 
-  this.defaultClient = options.originalIdentifier ? clients[null] : clients[0];
+  this.defaultClient = options.originalClient ? clients[null] : clients[0];
   this.key = this.defaultClient.key;
   this.identifier = options.identifier || '';
   this.addr = (this.identifier ? this.identifier + '.' : '') + this.key.publicKey;
