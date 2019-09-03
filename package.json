@@ -1,6 +1,6 @@
 {
   "name": "nkn-multiclient",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "NKN Client",
   "main": "lib/index.js",
   "directories": {
@@ -41,7 +41,7 @@
   "homepage": "https://nkn.org",
   "dependencies": {
     "memory-cache": "^0.2.0",
-    "nkn-client": "^0.6.4"
+    "nkn-client": "^0.6.0"
   },
   "devDependencies": {
     "browserify-replace": "^1.0.0",

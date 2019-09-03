@@ -12,6 +12,7 @@ module.exports = {
 },{}],2:[function(require,module,exports){
 'use strict';
 
+const nkn = require('nkn-client');
 const MultiClient = require('./multiclient');
 const consts = require('./const');
 
@@ -22,8 +23,9 @@ function multiclient(options = {}) {
 }
 
 module.exports = multiclient;
+module.exports.PayloadType = nkn.PayloadType;
 
-},{"./const":1,"./multiclient":3}],3:[function(require,module,exports){
+},{"./const":1,"./multiclient":3,"nkn-client":159}],3:[function(require,module,exports){
 'use strict';
 
 const cache = require('memory-cache');
@@ -34606,12 +34608,12 @@ Client.prototype.sendACK = function (dest, pid, encrypt) {
       return;
     }
     if (dest.length === 1) {
-      return sendACK.call(this, dest[0], pid, encrypt);
+      return this.sendACK(dest[0], pid, encrypt);
     }
     if (dest.length > 1 && encrypt) {
       console.warn("Encryption with multicast is not supported yet, fall back to unicast for ACK")
       for (var i = 0; i < dest.length; i++) {
-        sendACK.call(this, dest[i], pid, encrypt);
+        this.sendACK(dest[i], pid, encrypt);
       }
       return;
     }
@@ -34623,16 +34625,44 @@ Client.prototype.sendACK = function (dest, pid, encrypt) {
   this.ws.send(msg.serializeBinary());
 };
 
-Client.prototype.getSubscribers = function (topic, bucket) {
+Client.prototype.getSubscribers = function (topic, offset = 0, limit = 1000, meta = false, txPool = false) {
   return rpcCall(
     this.options.seedRpcServerAddr,
     'getsubscribers',
-    { topic: topic, bucket: bucket },
+    { topic: topic, offset: offset, limit: limit, meta: meta, txPool: txPool },
   );
 }
 
-Client.prototype.publish = async function (topic, bucket, data, options = {}) {
-  let subscribers = await this.getSubscribers(topic, bucket);
+Client.prototype.getSubscribersCount = function (topic) {
+  return rpcCall(
+    this.options.seedRpcServerAddr,
+    'getsubscriberscount',
+    { topic: topic },
+  );
+}
+
+Client.prototype.getSubscription = function (topic, subscriber) {
+  return rpcCall(
+    this.options.seedRpcServerAddr,
+    'getsubscription',
+    { topic: topic, subscriber: subscriber },
+  );
+}
+
+Client.prototype.publish = async function (topic, data, options = {}) {
+  let offset = 0;
+  let limit = 1000;
+  let res = await this.getSubscribers(topic, offset, limit, false, options.txPool || false);
+  let subscribers = res.subscribers;
+  let subscribersInTxPool = res.subscribersInTxPool;
+  while (res.subscribers && res.subscribers.length >= limit) {
+    offset += limit;
+    res = await this.getSubscribers(topic, offset, limit, false, false);
+    subscribers = subscribers.concat(res.subscribers);
+  }
+  if (options.txPool) {
+    subscribers = subscribers.concat(subscribersInTxPool);
+  }
   options = Object.assign({}, options, { noReply: true });
   return this.send(Object.keys(subscribers), data, options);
 }
