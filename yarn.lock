@@ -433,9 +433,9 @@ buffer@^5.0.2:
     ieee754 "^1.1.4"
 
 buffer@^5.2.1:
-  version "5.4.0"
-  resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.4.0.tgz#33294f5c1f26e08461e528b69fa06de3c45cbd8c"
-  integrity sha512-Xpgy0IwHK2N01ncykXTy6FpCWuM+CJSHoPVBLyNqyrWxsedpLvwsYUhf0ME3WRFNUhos0dMamz9cOS/xRDtU5g==
+  version "5.4.2"
+  resolved "https://registry.yarnpkg.com/buffer/-/buffer-5.4.2.tgz#2012872776206182480eccb2c0fba5f672a2efef"
+  integrity sha512-iy9koArjAFCzGnx3ZvNA6Z0clIbbFgbdWQ0mKD3hO0krOrZh8UgA6qMKcZvwLJxS+D6iVR76+5/pV56yMNYTag==
   dependencies:
     base64-js "^1.0.2"
     ieee754 "^1.1.4"
@@ -1891,9 +1891,9 @@ needle@^2.2.1:
     sax "^1.2.4"
 
 nkn-client@^0.6.0:
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/nkn-client/-/nkn-client-0.6.5.tgz#8537731db6169ce0762afbe1f64238d790439441"
-  integrity sha512-atEaXk/4vpreZE/ac4mLYq4cvIFznTcbWk+xg90KlxpDhdPxh+1PPmfBDQ3YqGXL0yxjGp3rlXa3oOzWUUu/6g==
+  version "0.6.6"
+  resolved "https://registry.yarnpkg.com/nkn-client/-/nkn-client-0.6.6.tgz#4cbf347bb409f42f491b47ad136caedca4fe1f45"
+  integrity sha512-SPz69YAqWMp9nAGcoCveZOvtMeC0ROq56WegPA2zj+rXXa7sTZoOrrJrnzYt4hm7E5fWKOCACQ+yE5Fl1uv7vw==
   dependencies:
     buffer "^5.2.1"
     cross-fetch "^2.2.2"
