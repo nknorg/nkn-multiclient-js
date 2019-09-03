@@ -167,10 +167,22 @@ MultiClient.prototype.send = function (dest, data, options = {}) {
   }));
 };
 
-MultiClient.prototype.publish = async function (topic, bucket, data, options = {}) {
-  let subscribers = await this.defaultClient.getSubscribers(topic, bucket);
+MultiClient.prototype.publish = async function (topic, data, options = {}) {
+  let offset = 0;
+  let limit = 1000;
+  let res = await this.defaultClient.getSubscribers(topic, { offset, limit, txPool: options.txPool || false });
+  let subscribers = res.subscribers;
+  let subscribersInTxPool = res.subscribersInTxPool;
+  while (res.subscribers && res.subscribers.length >= limit) {
+    offset += limit;
+    res = await this.getSubscribers(topic, { offset, limit });
+    subscribers = subscribers.concat(res.subscribers);
+  }
+  if (options.txPool) {
+    subscribers = subscribers.concat(subscribersInTxPool);
+  }
   options = Object.assign({}, options, { noReply: true });
-  return this.send(Object.keys(subscribers), data, options);
+  return this.send(subscribers, data, options);
 }
 
 MultiClient.prototype.onconnect = function (func) {
