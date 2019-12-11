@@ -1890,10 +1890,10 @@ needle@^2.2.1:
     iconv-lite "^0.4.4"
     sax "^1.2.4"
 
-nkn-client@^0.6.7:
-  version "0.6.7"
-  resolved "https://registry.yarnpkg.com/nkn-client/-/nkn-client-0.6.7.tgz#21e59bb412043a22352774c3426022c6fa13d5aa"
-  integrity sha512-Rfv6GCuO3VV2pnVgl2LV6gEFp8EivRv2Gk6aZhpJ0EsPdHpO6nEOuhzEHJJXYDEPdJVcLTxU/TRuSjdUKp+LQQ==
+nkn-client@^0.7.0:
+  version "0.7.0"
+  resolved "https://registry.yarnpkg.com/nkn-client/-/nkn-client-0.7.0.tgz#b643fbf4e101a1d990da38afb50efafd6121fdd0"
+  integrity sha512-3O7dC4EvynEOeeMfkMiQNynAxQAZwoG96huQj6xNriY2wOShR2hDI3/za7EwN4kd3GaDWKzaT71OBbiLzcFRbw==
   dependencies:
     buffer "^5.2.1"
     cross-fetch "^2.2.2"
@@ -1905,6 +1905,7 @@ nkn-client@^0.6.7:
     isomorphic-ws "^4.0.1"
     mathjs "^4.4.2"
     moment "^2.22.1"
+    pako "^1.0.10"
     tweetnacl "^1.0.1"
     ws "^5.2.0"
 
@@ -2059,15 +2060,15 @@ outpipe@^1.1.0:
   dependencies:
     shell-quote "^1.4.2"
 
+pako@^1.0.10, pako@~1.0.5:
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.10.tgz#4328badb5086a426aa90f541977d4955da5c9732"
+  integrity sha512-0DTvPVU3ed8+HNXOu5Bs+o//Mbdj9VNQMUOe9oKCwh8l0GNwpTDMKCWbRjgtD291AWnkAgkqA/LOnQS8AmS1tw==
+
 pako@~0.2.0:
   version "0.2.9"
   resolved "https://registry.yarnpkg.com/pako/-/pako-0.2.9.tgz#f3f7522f4ef782348da8161bad9ecfd51bf83a75"
   integrity sha1-8/dSL073gjSNqBYbrZ7P1Rv4OnU=
-
-pako@~1.0.5:
-  version "1.0.10"
-  resolved "https://registry.yarnpkg.com/pako/-/pako-1.0.10.tgz#4328badb5086a426aa90f541977d4955da5c9732"
-  integrity sha512-0DTvPVU3ed8+HNXOu5Bs+o//Mbdj9VNQMUOe9oKCwh8l0GNwpTDMKCWbRjgtD291AWnkAgkqA/LOnQS8AmS1tw==
 
 parents@^1.0.0, parents@^1.0.1:
   version "1.0.1"
