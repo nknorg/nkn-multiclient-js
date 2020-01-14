@@ -1846,10 +1846,10 @@ needle@^2.2.1:
     iconv-lite "^0.4.4"
     sax "^1.2.4"
 
-nkn-client@^0.7.2:
-  version "0.7.2"
-  resolved "https://registry.yarnpkg.com/nkn-client/-/nkn-client-0.7.2.tgz#263a0fef0aea1ef456ac51f6fc354f2b8bc352d8"
-  integrity sha512-fqBOtxz5yMGezgigtIvCZR7zO55R1RhTftBVf1B4Io8ewaHSY7B1lC/6SPQHAhLa2rpEGjp/FssH8ehmfiogAg==
+nkn-client@^0.7.3:
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/nkn-client/-/nkn-client-0.7.3.tgz#646a67d2c4db7da8c7b516ec58b02a37338e4857"
+  integrity sha512-sqD7sdJFqvVcEmfj+lHpFuQYu5wqyW40efYzIpczzI/6zfsQRKtXe8QxvMDc99K5SJ0RlE2XWL9Rlt0ECL5vqA==
   dependencies:
     buffer "^5.2.1"
     cross-fetch "^2.2.2"

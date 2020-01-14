@@ -14860,10 +14860,16 @@ function Client(key, identifier, options = {}) {
 };
 
 function isTls() {
+  if (this.options && Is.bool(this.options.tls)) {
+    return this.options.tls;
+  }
   if (typeof window === 'undefined') {
     return false;
   }
-  return window.location && window.location.protocol === "https:";
+  if (window.location && window.location.protocol === "https:") {
+    return true;
+  }
+  return false;
 }
 
 function newWsAddr(nodeInfo) {
@@ -14877,7 +14883,7 @@ function newWsAddr(nodeInfo) {
 
   var ws;
   try {
-    ws = new WebSocket((isTls() ? 'wss://' : 'ws://') + nodeInfo.addr);
+    ws = new WebSocket((isTls.call(this) ? 'wss://' : 'ws://') + nodeInfo.addr);
     ws.binaryType = "arraybuffer";
   } catch (e) {
     console.log('Create WebSocket failed,', e);
@@ -14964,7 +14970,7 @@ Client.prototype.connect = async function () {
   try {
     let res = await rpcCall(
       this.options.seedRpcServerAddr,
-      isTls() ? 'getwssaddr' : 'getwsaddr',
+      isTls.call(this) ? 'getwssaddr' : 'getwsaddr',
       { address: this.addr },
     );
     newWsAddr.call(this, res);
