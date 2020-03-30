@@ -1,3 +1,5 @@
+**Note: This repo is deprecated in favor of [nkn-sdk-js](https://github.com/nknorg/nkn-sdk-js).**
+
 [![CircleCI Status](https://circleci.com/gh/nknorg/nkn-multiclient-js.svg?style=shield&circle-token=:circle-token)](https://circleci.com/gh/nknorg/nkn-multiclient-js)
 
 # nkn-multiclient-js
